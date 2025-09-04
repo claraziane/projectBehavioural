@@ -1,40 +1,148 @@
 clear;
-close;
+close all;
 clc;
 
-% Declare paths
-addpath '/Users/claraziane/Documents/Académique/Informatique/projetDT'
-
-Participants = {'P03'};
-Conditions   = {'noneRestSUB'; 'stimRestODD';...
-                 'noneWalkST'; 'noneWalkSUB'; 'stimWalkODD'; 'syncWalkSUB'; 'syncWalkODD';...
-                  'noneTapST';  'noneTapSUB'; ' stimTapSUB';  'syncTapSUB'; 'syncTapODD'};
+Participants = {'P04'};
+Conditions   = {'stimRestODD';
+                 'noneWalkST'; 'noneWalkSUB'; 'stimWalkODD'; 'syncWalkST'; 'syncWalkSUB'; 'syncWalkODD';...
+                  'noneTapST';  'noneTapSUB';  'stimTapODD';  'syncTapST';  'syncTapSUB'; 'syncTapODD'};
 
 for iParticipant = 1:length(Participants)
 
     for iCondition = 1:length(Conditions)
 
+        % Create path for cleaned data or load preexisting data
+        pathExport = (['/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/Processed/' Participants{iParticipant} '/']);
+        if ~exist(pathExport, 'dir')
+            mkdir(pathExport)
+        elseif exist([pathExport 'Events.mat'], 'file')
+            load([pathExport 'Events.mat'])
+        end
+
         % Load results from .TXT file as table
-        Data = readtable(['/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/' Participants{iParticipant} '/Kinetics/' Conditions{iCondition} '.TXT']);
-        Data = table(Data.Var1, Data.Var2, Data.Var3, Data.Var4, Data.Var5, Data.Var6, Data.Var7,'VariableNames', {'nStep', 'Movement', 'mvtOnset', 'mvtOffset', 'maxForceTime','maxForce', 'missedFrames'});
+        %         Data = readtable(['/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/Test/2025-03-20/' Conditions{iCondition} '.TXT']);
+        file = (['/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/RAW/' Participants{iParticipant} '/Kinetics/' Conditions{iCondition} '.TXT']);
+        Data = readtable(file);
 
-        % Extracting step onsets
-        Onsets = [];
-        Onsets = Data.mvtOnset;
-        Onsets(Onsets == 0) = NaN;
-        Onsets = Onsets(~isnan(Onsets));
+        [startTime] = getTrialStartTime(file);
+        if strcmpi(Conditions{iCondition}, 'stimWalkODD') || strcmpi(Conditions{iCondition}, 'stimTapODD') % Beats start after 11 seconds in these conditions
+            [startTime] = startTime+(11*1000);
+        end
+        endTime     = startTime + (1000*149);
 
-        IMI = [];
-        IMI = diff(Onsets(10:end-1));
-        figure; plot(IMI);
 
-        % Computing coefficient of variability of inter-mvt intervals
-        imiStd = std(IMI);
-        imiCV = imiStd/mean(IMI);
+        %% Extract beat-related events
+        if strcmpi(Conditions{iCondition}(1:4), 'stim') || strcmpi(Conditions{iCondition}(1:4), 'sync')
+            BPM = getBPM(file);
+            IBI = (60/BPM)*1000;
+            beatOnsets = ceil([startTime:IBI:endTime])';
 
-        [cadence, stepFreq] = getCadence(Onsets, 1000);
-        
-        clear DATA
+            Events.(Conditions{iCondition}).BPM        = BPM;
+            Events.(Conditions{iCondition}).beatOnsets = beatOnsets;
+            Events.(Conditions{iCondition}).IBI        = IBI;
+
+            % Extract oddball information
+            if strcmpi(Conditions{iCondition}(end-2:end), 'ODD')
+                beats = nan(size(Data,2),1);
+                for iCell = 1:size(Data,2)
+                    if isa(Data.(strcat('Var', num2str(iCell)))(end), 'cell')
+                        beats(iCell,1) = str2double(Data.(strcat('Var', num2str(iCell)))(end));
+                    elseif isa(Data.(strcat('Var', num2str(iCell)))(end), 'double')
+                        beats(iCell,1) = Data.(strcat('Var', num2str(iCell)))(end);
+                    end
+                end
+
+                % Only keep beats that were actual played to the participant
+                Events.(Conditions{iCondition}).Oddball = beats(1:length(beatOnsets));
+
+            end
+
+        end
+
+        %% Extract movement-related events
+        if strcmpi(Conditions{iCondition}(5:8), 'Walk') || strcmpi(Conditions{iCondition}(5:7), 'Tap')
+            Data = table(Data.Var1, Data.Var2, Data.Var3, Data.Var4, Data.Var5, Data.Var6, Data.Var7,'VariableNames', {'nStep', 'Movement', 'mvtOnset', 'mvtOffset', 'maxForceTime','maxForce', 'missedFrames'});
+
+            % Extracting mvt onsets
+            Onsets = [];
+            Onsets = Data.mvtOnset;
+            Onsets(Onsets == 0) = NaN;
+            Onsets = Onsets(~isnan(Onsets));
+            Onsets = Onsets(5:end-1);
+
+            IMI = [];
+            IMI = diff(Onsets);
+            figure; plot(IMI); hold on;
+
+            if strcmpi(Conditions{iCondition}(5:8), 'Walk')
+
+                % Check for missed steps
+                mvtMissed = sum(IMI > median(IMI)*1.5);
+                %                 mvtMissed = sum(IMI > 966*1.5);
+                if mvtMissed >= 1
+                    missedIndex = find(IMI > median(IMI)*1.5, length(IMI(IMI > median(IMI)*1.5)));
+                    %                     missedIndex = find(IMI > 966*1.5, length(IMI(IMI > 1120*1.5)));
+                    plot(missedIndex, IMI(missedIndex), 'r*'); hold on;
+                    %                     plot(missedIndex, IMI(IMI > 966*1.5), 'r*');
+                    for iMvt = 1:length(missedIndex)
+                        i = missedIndex((length(missedIndex)-iMvt)+1);
+
+                        % Check how many mvts were missed
+                        missedCase = nanmedian(IMI) * [2:50];
+                        [~, nMissed] = min(abs(missedCase-IMI(i)));
+                        Onsets = vertcat(Onsets(1:i), NaN(nMissed,1), Onsets(i+1:end));
+                    end
+
+                end
+
+                Threshold = 500;
+            else
+                Threshold = 100;
+            end
+
+            mvtAdded = sum(IMI < Threshold);
+            if mvtAdded >= 1
+                addedIndex = find(IMI  < Threshold, length(IMI(IMI < Threshold)));
+                plot(addedIndex, IMI(IMI < Threshold), 'r*');
+                Onsets(addedIndex+1) = NaN;
+                IMI = diff(Onsets);
+                figure; plot(IMI);
+            end
+            IMI = diff(Onsets);
+            figure; plot(IMI);
+
+            if strcmpi(Conditions{iCondition}(5:8), 'Walk')
+                cadence = 2 * round((60000 / (Onsets(end)-1 - Onsets(1))) * (length(Onsets)-1));
+            elseif strcmpi(Conditions{iCondition}(5:7), 'Tap')
+                cadence = round((60000 / (Onsets(end)-1 - Onsets(1))) * (length(Onsets)-1));
+            end
+
+            % Computing coefficient of variability of inter-mvt intervals
+            imiStd = nanstd(IMI);
+            imiCV = imiStd/nanmean(IMI);
+
+            mvtFreq = cadence/60;
+
+            Events.(Conditions{iCondition}).mvtOnsets   = Onsets;
+            Events.(Conditions{iCondition}).Cadence     = cadence;
+            Events.(Conditions{iCondition}).mvtFreq     = mvtFreq;
+            Events.(Conditions{iCondition}).IMI         = IMI;
+            Events.(Conditions{iCondition}).imiCV       = imiCV;
+            Events.(Conditions{iCondition}).sampFreq    = 1000;
+
+%             Events.(Conditions{iCondition}).mvtOnsets   = NaN;
+%             Events.(Conditions{iCondition}).Cadence     = NaN;
+%             Events.(Conditions{iCondition}).mvtFreq     = NaN;
+%             Events.(Conditions{iCondition}).IMI         = NaN;
+%             Events.(Conditions{iCondition}).imiCV       = NaN;
+%             Events.(Conditions{iCondition}).sampFreq    = 1000;
+            
+        end
+
+        % Save structure of processed data
+        save([pathExport '/Events'], 'Events');
+        clear Data cadence step
+        close all;
 
     end
 

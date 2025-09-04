@@ -1,0 +1,70 @@
+clear all;
+close all;
+clc;
+
+% Declare paths
+pathData    = ('/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/Processed/');
+pathResults = ('/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/DATA/Results/');
+addpath('/Users/claraziane/Documents/Académique/Informatique/projectFig/'); %Functions for figures
+
+
+Participants = {'P02'; 'P03'; 'P04'; 'P08'; 'P10'; 'P13'; 'P16'; 'P18';...
+                'P19'; 'P21'; 'P23'; 'P24'; 'P25'; 'P26'; 'P27'; 'P30';...
+                'P32'; 'P33'; 'P34'; 'P35'; 'P36'; 'P37'};
+
+Conditions   = {'noneTap'; 'syncTap'; 'noneWalk'; 'syncWalk'};
+Comparisons  = {'ST'; 'SUB'; 'ODD'};
+
+iPlot = 1;
+
+% Preallocate matrix
+imiCV      = nan(length(Participants),length(Conditions)*length(Comparisons));
+imiMean    = nan(length(Participants),length(Conditions)*length(Comparisons));
+cadence    = nan(length(Participants),length(Conditions)*length(Comparisons));
+
+for iCondition = 1:length(Conditions)
+
+    for iParticipant = 1:length(Participants)
+
+        % Load data
+        pathImport = [pathResults Participants{iParticipant} '/'];
+        load([pathData Participants{iParticipant}  '/Events.mat']);
+
+        for iCompare = 1:length(Comparisons)
+            condName = [Conditions{iCondition} Comparisons{iCompare}];
+            if strcmpi(condName, 'noneTapODD') == 1
+                condName = 'stimTapODD';
+            elseif strcmpi(condName, 'noneWalkODD') == 1
+                condName = 'stimWalkODD';
+            end
+            
+            if 
+            else
+                imiCV(iParticipant, iPlot+iCompare-1) = Events.(condName).imiCV;
+                imiMean(iParticipant, iPlot+iCompare-1) = mean(Events.(condName).IMI);
+                cadence(iParticipant, iPlot+iCompare-1) = Events.(condName).Cadence;
+            end
+
+        end % End Comparisons
+
+        if iParticipant == length(Participants)
+            iPlot = iPlot + length(Comparisons);
+        end
+
+    end % End Participants
+
+end % End Conditions
+
+
+% Plot
+plotScatterUpdated(imiCV, Comparisons, Conditions, 'Coefficient of Variation_{Inter-Movement Interval}');
+plotScatter(imiMean, Comparisons, Conditions, 'Inter-Movement Interval (ms)');
+plotScatter(cadence, Comparisons, Conditions, 'Cadence (movements per minute)');
+
+
+% Save
+saveas(figure(1), [pathResults '/All/' Sessions{iSession} '/Motor/fig_mvtCV.png'])
+saveas(figure(2), [pathResults '/All/' Sessions{iSession} '/Motor/fig_mvtIMI.png'])
+saveas(figure(3), [pathResults '/All/' Sessions{iSession} '/Motor/fig_mvtCadence.png'])
+
+close all;
