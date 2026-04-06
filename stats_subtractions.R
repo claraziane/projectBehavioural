@@ -7,8 +7,8 @@ library(car)
 library(data.table)
 
 # Load result table
-DATA <- read.csv("/Users/claraziane/Desktop/statsTable_oddballResults_Behav_noOutliers.csv")
-# DATA <- read.csv("/Users/claraziane/Desktop/statsTable_oddballResults_Behav.csv")
+# DATA <- read.csv("/Users/claraziane/Desktop/statsTable_oddballResults_Behav_noOutliers.csv")
+DATA <- read.csv("/Users/claraziane/Library/CloudStorage/OneDrive-UniversitedeMontreal/Projets/projectBehavioural/Results/Cognition/statsTable_subResults_Behav.csv")
 head(DATA)
 # View(DATA)
 
@@ -26,5 +26,5 @@ summary(model)
 Anova(model, type=3, test.statistic = "F")
 eta_squared(model, partial = TRUE)
 
-emm_Instruction <- emmeans(model, ~ Mv)
+emm_Instruction <- emmeans(model, ~ Instruction)
 summary(emm_Instruction)

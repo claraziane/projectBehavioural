@@ -12,15 +12,19 @@ Participants = {'P02'; 'P03'; 'P04'; 'P08'; 'P10'; 'P13'; 'P16'; 'P17'; 'P18';..
                 'P19'; 'P21'; 'P23'; 'P24'; 'P25'; 'P26'; 'P27'; 'P29'; 'P30'; 'P31';...
                 'P32'; 'P33'; 'P34'; 'P35'; 'P36'; 'P37'; 'P38'; 'P39'; 'P40'; 'P41'; 'P44'};
 
-Conditions   = {'stim'; 'sync'; 'sync'; 'sync'}; %'none'; 'none'; 
-Compare      = { 'ODD';   'ST';  'SUB';  'ODD'}; %  'ST';  'SUB';  
+% Conditions   = {'none'; 'sync'; 'stim'; 'sync'; 'none'; 'sync'}; 
+% Compare      = {  'ST';   'ST';  'ODD';  'ODD';  'SUB';  'SUB'};       
+% Titles  = {'Spontaneous (Single task)'; 'Sync (Single task)'; 'Spontaneous (Oddball)'; 'Sync (Oddball)'; 'Spontaneous (Subtractions)'; 'Sync (Subtractions)'}; % 'Silence (ST)'; 'Silence (SUB)'; 
+
+Conditions   = { 'sync'; 'sync'; 'sync'}; 
+Compare      = {   'ST';   'ODD';  'SUB'};       
+Titles  = { 'Sync (Single task)'; 'Sync (Oddball)'; 'Sync (Subtractions)'}; % 'Silence (ST)'; 'Silence (SUB)'; 
 
 var = {'IMI'; 'imiCV'; 'phaseAngleMean'; 'resultantLength'}; %{'imiMean'; 'imiCV'; 'cadence'}; 
 figTitles = {'Inter-Movement Interval'; 'Variability of Inter-Movement Interval'; 'Synchronization Accuracy'; 'Synchronization Consistency'}; %{'imiMean'; 'imiCV'; 'cadence'}; 
 
 xLabels = {'Tap'};
 yLabels = {'Walk'};
-Titles  = {'Ignore (ODD)'; 'Sync (ST)'; 'Sync (SUB)'; 'Sync (ODD)'}; % 'Silence (ST)'; 'Silence (SUB)'; 
 corrType = 'Spearman';
 
 iFig = 1;
