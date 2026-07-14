@@ -25,7 +25,7 @@ Titles  = { 'Ignore (ODD)'; 'Sync (ST)'; 'Sync (ODD)'}; %'Silence (ST)';
 corrType = 'Spearman';
 
 iFig = 1;
-for iVar = 4%:length(var)
+for iVar = 1%:length(var)
 
     for iCondition = 1:length(Conditions)
         condX = strcat(Conditions{iCondition}, 'Walk', CompareTeensy{iCondition});

@@ -21,6 +21,7 @@ iPlot = 1;
 imiCV      = nan(length(Participants),length(Conditions)*length(Comparisons));
 imiMean    = nan(length(Participants),length(Conditions)*length(Comparisons));
 cadence    = nan(length(Participants),length(Conditions)*length(Comparisons));
+autoCor    = nan(length(Participants),length(Conditions)*length(Comparisons));
 
 for iCondition = 1:length(Conditions)
 
@@ -54,6 +55,9 @@ for iCondition = 1:length(Conditions)
                     imiCV(iParticipant, iPlot+iCompare-1) = Events.(condName).imiCV;
                     imiMean(iParticipant, iPlot+iCompare-1) = nanmean(Events.(condName).IMI);
                     cadence(iParticipant, iPlot+iCompare-1) = Events.(condName).Cadence;
+                    [acf,lags,bounds] = autocorr(Events.(condName).IMI, 'NumLags', 1);
+                    autoCor(iParticipant, iPlot+iCompare-1) = acf(2);
+
                 end
 
             end
@@ -73,7 +77,7 @@ end % End Conditions
 plotScatterUpdated(imiCV, Comparisons, Conditions, 'Coefficient of Variation_{Inter-Movement Interval}');
 plotScatterUpdated(imiMean, Comparisons, Conditions, 'Inter-Movement Interval (ms)');
 plotScatterUpdated(cadence, Comparisons, Conditions, 'Cadence (movements per minute)');
-
+plotScatterUpdated(autoCor, Comparisons, Conditions, 'Lag-1 Autocorrelation');
 
 % Save
 saveas(figure(1), [pathResults 'Motor/fig_mvtCV.png'])

@@ -28,7 +28,7 @@ yLabels = {'Walk'};
 corrType = 'Spearman';
 
 iFig = 1;
-for iVar = 3:length(var)
+for iVar = 4:length(var)
     xLabel = (xLabels{1});
     yLabel = (yLabels{1});
 

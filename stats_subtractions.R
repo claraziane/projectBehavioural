@@ -20,7 +20,7 @@ DATA$Instruction <- factor(DATA$Instruction, levels = c("stim", "sync"))
 contrasts(DATA$Mvt) <- contr.sum
 contrasts(DATA$Instruction) <- contr.sum
 
-model <- lmer(Nb.Errors ~ 1 + Mvt + Instruction + Mvt:Instruction + (1|Participants), data = DATA)
+model <- lmer(Nb.Correct ~ 1 + Mvt + Instruction + Mvt:Instruction + (1|Participants), data = DATA)
 summary(model)
 
 Anova(model, type=3, test.statistic = "F")
@@ -28,3 +28,6 @@ eta_squared(model, partial = TRUE)
 
 emm_Instruction <- emmeans(model, ~ Instruction)
 summary(emm_Instruction)
+
+emm_Mvt <- emmeans(model, ~ Mvt)
+summary(emm_Mvt)
